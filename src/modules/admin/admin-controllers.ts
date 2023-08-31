@@ -1,6 +1,6 @@
-import { Vendor } from '../models/vendor-model';
+import { Vendor } from '../vendor/vendor-model';
 import { Request, Response } from 'express';
-import { vendorSignupSchema } from '../middleware/validator';
+import { vendorSignupSchema } from '../validator';
 import jwt from 'jwt-simple';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';

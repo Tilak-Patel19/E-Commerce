@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import vendorDB from '../config/db.config';
+import vendorDB from '../auth/db.config';
 
 export const Vendor = vendorDB.define('Vendor', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },

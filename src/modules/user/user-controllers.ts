@@ -1,9 +1,9 @@
-import { User } from '../models/user-model';
+import { User } from './user-model';
 import jwt from 'jwt-simple';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import { userLoginSchema, userSignupSchema } from '../middleware/validator';
+import { userLoginSchema, userSignupSchema } from '../validator';
 dotenv.config({ path: './../../.env' });
 declare global {
     namespace Express {

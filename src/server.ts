@@ -1,7 +1,7 @@
 import express from 'express';
-import db from './config/db.config';
-import userRouter from './routes/user-routes';
-import vendorRouter from './routes/vendor-routes';
+import db from './modules/auth/db.config';
+import userRouter from './modules/user/user-routes';
+import vendorRouter from './modules/vendor/vendor-routes';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 

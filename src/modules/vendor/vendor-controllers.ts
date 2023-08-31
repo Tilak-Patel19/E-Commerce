@@ -1,9 +1,9 @@
-import { Vendor } from '../models/vendor-model';
+import { Vendor } from './vendor-model';
 import { Request, Response } from 'express';
 import jwt from 'jwt-simple';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import { vendorLoginSchema } from '../middleware/validator';
+import { vendorLoginSchema } from '../validator';
 import { Op } from 'sequelize';
 
 dotenv.config({ path: './../../.env' });
@@ -21,9 +21,7 @@ export const vendorLogin = async (req: Request, res: Response) => {
 
     try {
         const whereCondition: Record<string, string> = {};
-        if (
-            
-            username) {
+        if (username) {
             whereCondition['username'] = username;
         }
         if (email) {

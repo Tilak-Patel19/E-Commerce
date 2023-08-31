@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import userDB from '../config/db.config';
+import userDB from '../auth/db.config';
 
 export const User = userDB.define('User', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

@@ -1,6 +1,6 @@
 import express from 'express';
-import { vendorLogin } from '../controllers/vendor-controllers';
-import { vendorSignup } from '../controllers/admin-controllers';
+import { vendorLogin } from './vendor-controllers';
+import { vendorSignup } from '../admin/admin-controllers';
 
 const vendorRouter = express.Router();
 
