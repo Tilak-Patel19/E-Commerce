@@ -2,6 +2,7 @@ import express from 'express';
 import db from './modules/auth/db.config';
 import userRouter from './modules/user/user-routes';
 import vendorRouter from './modules/vendor/vendor-routes';
+import productRouter from './modules/product/product-routes';
 import dotenv from 'dotenv';
 
 const app = express();
@@ -17,6 +18,9 @@ app.use('/api/user', userRouter);
 
 // vendor
 app.use('/api/vendor', vendorRouter);
+
+// product
+app.use('/api/product', productRouter);
 
 app.all('*', (req, res) => {
     res.status(404).json({

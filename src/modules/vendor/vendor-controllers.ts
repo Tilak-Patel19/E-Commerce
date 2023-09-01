@@ -1,62 +1,102 @@
-import { Vendor } from './vendor-model';
 import { Request, Response } from 'express';
-import jwt from 'jwt-simple';
-import bcrypt from 'bcrypt';
-import dotenv from 'dotenv';
-import { vendorLoginSchema } from '../validator';
-import { Op } from 'sequelize';
+import { Vendor } from './vendor-model';
 import { errorHandler } from '../utils/catch-async';
-dotenv.config({ path: './../../.env' });
+import { sendResponse } from '../utils/response';
+import AppError from '../utils/app-error';
+import bcrypt from 'bcrypt';
 
-export const vendorLogin = errorHandler(async (req: Request, res: Response) => {
-    const { username, email, password } = req.body;
-
-    const { error } = vendorLoginSchema.validate({ username, email, password });
-    if (error) {
-        return res.status(400).json({
-            isError: true,
-            message: error.message,
-        });
-    }
-
-    const whereCondition: Record<string, string> = {};
-    if (username) {
-        whereCondition['username'] = username;
-    }
-    if (email) {
-        whereCondition['email'] = email;
-    }
-
-    const vendor = await Vendor.findOne({
-        where: {
-            [Op.or]: [whereCondition],
-        },
-    });
+export const getVendorById = errorHandler(async (req: Request, res: Response) => {
+    const vendorId = req.params.vendorId;
+    const vendor = await Vendor.findByPk(vendorId);
 
     if (!vendor) {
-        return res.status(401).json({
-            status: 'Fail',
-            message: 'Vendor not found',
-        });
+        throw new AppError('Vendor not found', 404);
     }
 
-    const validPassword = await bcrypt.compare(password, vendor.dataValues.password);
+    sendResponse(res, 200, 'Vendor found', { vendor });
+});
 
-    if (validPassword) {
-        const token = jwt.encode(
-            { username: vendor.dataValues.username, email: vendor.dataValues.email },
-            process.env.JWT_SECRET as string
-        );
+export const updateVendor = errorHandler(async (req: Request, res: Response) => {
+    const vendorId = req.params.vendorId;
+    const { username, email, status } = req.body;
+    const updatedData = { username, email, status };
 
-        return res.status(200).json({
-            status: 'Success',
-            message: 'Vendor login successful',
-            token: token,
-        });
-    } else {
-        return res.status(401).json({
-            status: 'Fail',
-            message: 'Invalid password',
-        });
+    const vendor = await Vendor.findByPk(vendorId);
+
+    if (!vendor) {
+        throw new AppError('Vendor not found', 404);
     }
+
+    Object.assign(vendor, updatedData);
+    await vendor.save();
+
+    sendResponse(res, 200, 'Vendor  updated successfully', { vendor });
+});
+
+export const deleteVendor = errorHandler(async (req: Request, res: Response) => {
+    const vendorId = req.params.vendorId;
+    const vendor = await Vendor.findByPk(vendorId);
+
+    if (!vendor) {
+        throw new AppError('Vendor not found', 404);
+    }
+
+    await vendor.destroy();
+
+    sendResponse(res, 204, 'Vendor deleted successfully');
+});
+
+export const listVendors = errorHandler(async (_, res: Response) => {
+    const vendors = await Vendor.findAll();
+
+    sendResponse(res, 200, 'List of vendors', { vendors });
+});
+
+export const resetVendorPassword = errorHandler(async (req: Request, res: Response) => {
+    const vendorId = req.params.vendorId;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (newPassword !== confirmPassword) {
+        throw new AppError('Passwords do not match', 400);
+    }
+
+    const vendor = await Vendor.findByPk(vendorId);
+
+    if (!vendor) {
+        throw new AppError('Vendor not found', 404);
+    }
+
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+
+    vendor.dataValues.password = hashPassword;
+    await vendor.save();
+
+    sendResponse(res, 200, 'Password reset successfully');
+});
+
+export const changeVendorPassword = errorHandler(async (req: Request, res: Response) => {
+    const vendor = req.user;
+
+    if (!vendor) {
+        throw new AppError('Vendor not found', 404);
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    const validPassword = await bcrypt.compare(currentPassword, vendor.dataValues.password);
+
+    if (!validPassword) {
+        throw new AppError('Current password is incorrect', 400);
+    }
+
+    if (newPassword !== confirmPassword) {
+        throw new AppError('New passwords do not match', 400);
+    }
+
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+
+    vendor.dataValues.password = hashPassword;
+    await vendor.save();
+
+    sendResponse(res, 200, 'Password changed successfully');
 });

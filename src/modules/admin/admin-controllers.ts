@@ -5,40 +5,32 @@ import jwt from 'jwt-simple';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import { errorHandler } from '../utils/catch-async';
+import AppError from '../utils/app-error';
+import { sendResponse } from '../utils/response';
+
 dotenv.config({ path: './../../.env' });
 
 export const vendorSignup = errorHandler(async (req: Request, res: Response) => {
     const { username, email, password, confirmPassword, status } = req.body;
     const { error } = vendorSignupSchema.validate({ username, email, password, confirmPassword, status });
     if (error) {
-        return res.status(400).json({
-            isError: true,
-            message: error.message,
-        });
+        throw new AppError(error.message, 400);
     }
-    let vendorExist = await Vendor.findOne({ where: [{ email: email }, { username: username }] });
+    const vendorExist = await Vendor.findOne({ where: [{ email }, { username }] });
     if (vendorExist) {
-        return res.status(404).json({
-            isError: true,
-            message: 'Email/Username already already exists!',
-        });
+        throw new AppError('Email/Username already exists!', 404);
     }
     const hashPassword = await bcrypt.hash(password, 10);
 
     const data = { username, email, password: hashPassword, status };
     const vendor = await Vendor.create(data);
     if (!vendor) {
-        return res.status(401).json({
-            isError: true,
-            message: 'Vendor not created',
-        });
+        throw new AppError('Vendor not created', 401);
     }
-    const token = jwt.encode({ username: vendor.dataValues.username, email: vendor.dataValues.email }, process.env.JWT_SECRET as string);
+    const token = jwt.encode(
+        { id: vendor.dataValues.id, username: vendor.dataValues.username, email: vendor.dataValues.email },
+        process.env.JWT_SECRET as string
+    );
 
-    return res.status(201).json({
-        isError: false,
-        message: 'Vendor created successfully',
-        data: vendor,
-        token: token,
-    });
+    sendResponse(res, 201, 'Vendor created successfully', { data: vendor, token });
 });

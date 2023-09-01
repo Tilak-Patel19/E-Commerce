@@ -1,76 +1,102 @@
 import { User } from './user-model';
-import jwt from 'jwt-simple';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import dotenv from 'dotenv';
-import { userLoginSchema, userSignupSchema } from '../validator';
 import { errorHandler } from '../utils/catch-async';
 import { sendResponse } from '../utils/response';
 import AppError from '../utils/app-error';
-dotenv.config({ path: './../../.env' });
-declare global {
-    namespace Express {
-        interface Request {
-            user?: any;
-        }
-    }
-}
 
-export const signup = errorHandler(async (req: Request, res: Response) => {
-    const { name, email, password, confirmPassword, status, role } = req.body;
-    const { error } = userSignupSchema.validate({ name, email, password, confirmPassword, status, role });
-    if (error) {
-        return res.status(400).json({
-            isError: true,
-            message: error.message,
-        });
-    }
-    let userExist = await User.findOne({ where: { email: email } });
-    if (userExist) {
-        return res.status(404).json({
-            isError: true,
-            message: 'Email already already exists!',
-        });
-    }
-    const hashPassword = await bcrypt.hash(password, 10);
+export const getUserById = errorHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const user = await User.findByPk(userId);
 
-    const data = { name, email, password: hashPassword, status, role };
-    const user = await User.create(data);
     if (!user) {
-        const errorMessage = 'User not created';
-        throw new AppError(errorMessage, 401);
+        throw new AppError('User not found', 404);
     }
-    const token = jwt.encode({ id: user.dataValues.id }, process.env.JWT_SECRET as string);
 
-    sendResponse(res, 201, 'User created successfully', { user, token });
+    sendResponse(res, 200, 'User found', { user });
 });
 
-export const login = errorHandler(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-    const { error } = userLoginSchema.validate({ email, password });
-    if (error) {
-        return res.status(400).json({
-            isError: true,
-            message: error.message,
-        });
-    }
-    const user = await User.findOne({
-        where: { email: email },
-    });
+export const updateUser = errorHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const { name, email, status, role } = req.body;
+    const updatedData = { name, email, status, role };
+
+    const user = await User.findByPk(userId);
 
     if (!user) {
-        return res.status(401).json({
-            isError: true,
-            message: 'User not found',
-        });
+        throw new AppError('User not found', 404);
     }
 
-    const validPassword = await bcrypt.compare(password, user.dataValues.password);
+    Object.assign(user, updatedData);
+    await user.save();
 
-    const token = jwt.encode({ id: user.dataValues.id }, process.env.JWT_SECRET as string);
+    sendResponse(res, 200, 'User updated successfully', { user });
+});
+
+export const deleteUser = errorHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+
+    await user.destroy();
+
+    sendResponse(res, 204, 'User deleted successfully');
+});
+
+export const listUsers = errorHandler(async (_, res: Response) => {
+    const users = await User.findAll();
+
+    sendResponse(res, 200, 'List of users', { users });
+});
+
+export const resetPassword = errorHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (newPassword !== confirmPassword) {
+        throw new AppError('Passwords do not match', 400);
+    }
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+
+    user.dataValues.password = hashPassword;
+    await user.save();
+
+    sendResponse(res, 200, 'Password reset successfully');
+});
+
+export const changeUserPassword = errorHandler(async (req: Request, res: Response) => {
+    const user = req.user;
+
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    const validPassword = await bcrypt.compare(currentPassword, user.dataValues.password);
+
     if (!validPassword) {
-        const errorMessage = 'Invalid password';
-        throw new AppError(errorMessage, 401);
+        throw new AppError('Current password is incorrect', 400);
     }
-    sendResponse(res, 200, 'User login successful', { token });
+
+    if (newPassword !== confirmPassword) {
+        throw new AppError('New passwords do not match', 400);
+    }
+
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+
+    user.dataValues.password = hashPassword;
+    await user.save();
+
+    sendResponse(res, 200, 'Password changed successfully');
 });

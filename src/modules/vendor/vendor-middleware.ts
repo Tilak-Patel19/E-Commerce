@@ -1,18 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from './user-model';
-import { errorHandler } from '../utils/catch-async';
 import jwt from 'jwt-simple';
+import { Vendor } from './vendor-model';
 import AppError from '../utils/app-error';
 import { sendResponse } from '../utils/response';
 
-declare global {
-    namespace Express {
-        interface Request {
-            user?: any;
-        }
-    }
-}
-export const isLogin = errorHandler(async (req: Request, res: Response, next: NextFunction) => {
+export const isLogin = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.headers?.authorization?.replace('Bearer ', '')?.replace('bearer ', '')?.trim();
     if (!token) {
         return sendResponse(res, 404, 'Token missing');
@@ -23,25 +15,32 @@ export const isLogin = errorHandler(async (req: Request, res: Response, next: Ne
         return sendResponse(res, 401, 'Invalid token');
     }
 
-    const currentUser = await User.findOne({
+    const currentVendor = await Vendor.findOne({
         where: {
             id: decode.id,
         },
     });
 
-    if (!currentUser) {
-        return sendResponse(res, 401, 'User not found');
+    if (!currentVendor) {
+        return sendResponse(res, 401, 'Vendor not found');
     }
 
-    req.user = currentUser;
-    return next();
-});
+    req.user = currentVendor;
+    next();
+};
 
 export const restrictTo = (...roles: string[]) => {
-    return (req: Request, _res: Response, next: NextFunction) => {
-        if (!roles.includes(req.user.role)) {
+    return (req: Request, res: Response, next: NextFunction) => {
+        const currentVendor = req.user;
+
+        if (!currentVendor) {
+            return sendResponse(res, 401, 'Vendor not found');
+        }
+
+        if (!roles.includes(currentVendor.role)) {
             return next(new AppError('You do not have permission to perform this action', 403));
         }
+
         next();
     };
 };
