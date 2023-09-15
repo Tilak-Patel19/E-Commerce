@@ -1,5 +1,5 @@
 import express from 'express';
-import db from './modules/auth/db.config';
+import db from './modules/db.config';
 import userRouter from './modules/user/user-routes';
 import vendorRouter from './modules/vendor/vendor-routes';
 import productRouter from './modules/product/product-routes';

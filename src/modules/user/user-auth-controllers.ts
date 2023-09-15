@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jwt-simple';
-import { User } from './user-model';
+import User from './user-model';
 import { userLoginSchema, userSignupSchema } from '../validator';
 import { sendResponse } from '../utils/response';
 import AppError from '../utils/app-error';

@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
-import userDB from '../auth/db.config';
+import userDB from '../db.config';
 
-export const User = userDB.define('User', {
+const User = userDB.define('User', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     name: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING },
@@ -9,3 +9,4 @@ export const User = userDB.define('User', {
     role: { type: DataTypes.STRING },
     status: { type: DataTypes.STRING },
 });
+export default User;

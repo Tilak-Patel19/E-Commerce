@@ -1,4 +1,4 @@
-import { User } from './user-model';
+import User from './user-model';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { errorHandler } from '../utils/catch-async';

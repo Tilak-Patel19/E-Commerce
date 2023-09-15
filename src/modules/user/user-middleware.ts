@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from './user-model';
+import User from './user-model';
 import { errorHandler } from '../utils/catch-async';
 import jwt from 'jwt-simple';
 import AppError from '../utils/app-error';

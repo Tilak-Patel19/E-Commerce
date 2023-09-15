@@ -11,8 +11,8 @@ import { sendResponse } from '../utils/response';
 dotenv.config({ path: './../../.env' });
 
 export const vendorSignup = errorHandler(async (req: Request, res: Response) => {
-    const { username, email, password, confirmPassword, status } = req.body;
-    const { error } = vendorSignupSchema.validate({ username, email, password, confirmPassword, status });
+    const { username, email, password, confirmPassword } = req.body;
+    const { error } = vendorSignupSchema.validate({ username, email, password, confirmPassword });
     if (error) {
         throw new AppError(error.message, 400);
     }
@@ -22,7 +22,7 @@ export const vendorSignup = errorHandler(async (req: Request, res: Response) => 
     }
     const hashPassword = await bcrypt.hash(password, 10);
 
-    const data = { username, email, password: hashPassword, status };
+    const data = { username, email, password: hashPassword };
     const vendor = await Vendor.create(data);
     if (!vendor) {
         throw new AppError('Vendor not created', 401);

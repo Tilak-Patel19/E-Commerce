@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
-import userDB from '../auth/db.config';
+import userDB from '../db.config';
 
-export const Product = userDB.define('Product', {
+const Product = userDB.define('Product', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     name: { type: DataTypes.STRING },
     category: { type: DataTypes.STRING },
@@ -11,3 +11,4 @@ export const Product = userDB.define('Product', {
     quantity: { type: DataTypes.NUMBER },
     status: { type: DataTypes.STRING },
 });
+export default Product;
